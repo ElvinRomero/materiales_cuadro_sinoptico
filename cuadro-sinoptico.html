@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuadro Sinóptico Lineal - Actividad Interactiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-canvas: #0b0f19;
+            --card-bg: #111827;
+            --panel-bg: #1e293b;
+            --border-muted: #475569;
+            --primary: #38bdf8;
+            --primary-light: rgba(56, 189, 248, 0.15);
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: var(--bg-canvas);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        /* Ventana Modal de Gamificación e Indicaciones */
+        #game-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 12, 20, 0.92);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-muted);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            text-align: center;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .app-container {
+            max-width: 1900px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-muted);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        /* Cabecera */
+        .app-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-titles h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .header-titles p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .student-input {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-muted);
+            color: var(--text-main);
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+            font-size: 1.35rem;
+            outline: none;
+        }
+
+        .student-input:focus {
+            border-color: var(--primary);
+        }
+
+        .badge-pill {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-muted);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .instructor-badge {
+            background: var(--primary-light);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1.25rem;
+            border-radius: 20px;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        /* Lienzo del Cuadro Sinóptico con Líneas Conectoras */
+        .synopsis-viewport {
+            padding: 2.5rem 2rem;
+            overflow: auto;
+            background: #080c14;
+            flex-grow: 1;
+            min-height: 850px;
+        }
+
+        .tree-root-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            min-width: 1700px;
+        }
+
+        .root-box {
+            background: var(--panel-bg);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 800;
+            padding: 2.5rem 1.25rem;
+            border-radius: 10px;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            text-align: center;
+            letter-spacing: 2px;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+            height: fit-content;
+        }
+
+        .branches-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .branches-group::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 20px;
+            bottom: 20px;
+            width: 2px;
+            background: var(--border-muted);
+        }
+
+        .branch-node {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .branch-node::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            width: 1rem;
+            height: 2px;
+            background: var(--border-muted);
+        }
+
+        .sub-branches-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            position: relative;
+        }
+
+        .sub-branches-column::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 15px;
+            bottom: 15px;
+            width: 2px;
+            background: var(--border-muted);
+        }
+
+        .sub-branch-node {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .sub-branch-node::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            width: 1rem;
+            height: 2px;
+            background: var(--border-muted);
+        }
+
+        .items-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            position: relative;
+        }
+
+        .items-column::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 12px;
+            bottom: 12px;
+            width: 2px;
+            background: var(--border-muted);
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .item-row::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            width: 1rem;
+            height: 2px;
+            background: var(--border-muted);
+        }
+
+        /* Casillas Interactivas (Drop Zones) */
+        .drop-box {
+            background: var(--panel-bg);
+            border: 2px dashed var(--border-muted);
+            border-radius: 6px;
+            padding: 0.45rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 230px;
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .drop-box.drag-over {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            transform: scale(1.01);
+        }
+
+        .drop-box.filled {
+            background: #334155;
+            border-style: solid;
+            border-color: var(--primary);
+            color: var(--text-main);
+        }
+
+        .drop-box.correct {
+            background: rgba(34, 197, 94, 0.2) !important;
+            border-color: var(--success) !important;
+            color: #86efac !important;
+        }
+
+        .drop-box.incorrect {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border-color: var(--danger) !important;
+            color: #fca5a5 !important;
+        }
+
+        /* Banco de Palabras Inferior */
+        .wordbank-section {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-muted);
+            padding: 1.25rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .wordbank-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wordbank-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+        }
+
+        .words-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            max-height: 140px;
+            overflow-y: auto;
+            background: #060910;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-muted);
+        }
+
+        .word-chip {
+            background: var(--panel-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: grab;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .word-chip:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .word-chip.used {
+            opacity: 0.25;
+            pointer-events: none;
+            background: #0f172a;
+            border-color: var(--panel-bg);
+            color: var(--text-muted);
+        }
+
+        #feedback-container {
+            padding: 0 2rem;
+        }
+
+        .feedback-card {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .action-footer {
+            background: var(--panel-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-muted);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            background: #0ea5e9;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Modal de Inicio y Gamificación -->
+    <div id="game-modal">
+        <div id="modal-step-1" class="modal-card">
+            <h2 style="color: var(--primary); font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem;">¡Bienvenido a la Actividad Interactiva!</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Por favor, ingresa tu nombre completo para comenzar.</p>
+            <input type="text" id="modal-student-name" class="student-input" placeholder="Tu nombre..." style="width: 100%; padding: 0.75rem 1rem; font-size: 1rem; margin-bottom: 1.5rem; text-align: center;">
+            <button class="btn btn-primary" onclick="goToInstructions()" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 1rem;">Siguiente: Ver Indicaciones ➔</button>
+        </div>
+
+        <div id="modal-step-2" class="modal-card" style="display: none;">
+            <h2 style="color: var(--primary); font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">📜 Indicaciones del Juego</h2>
+            <div style="text-align: left; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <p>🎯 <strong>Objetivo:</strong> Completa el cuadro sinóptico arrastrando o haciendo clic en los conceptos del banco inferior hacia las casillas correctas.</p>
+                <p>🔄 <strong>Flexibilidad Total:</strong> En las categorías de listas (Construcción, Herramientas, Fundición, Ligeros, Pesados y Sintéticos), puedes colocar los elementos en cualquier orden.</p>
+                <p>⏱️ <strong>Cronómetro:</strong> El tiempo comienza al colocar el primer concepto y determina tu nivel de desempeño al comprobar.</p>
+                <p>🔒 <strong>Bloqueo:</strong> Al presionar "Comprobar Esquema" con éxito, las casillas quedarán fijadas.</p>
+            </div>
+            <button class="btn btn-primary" onclick="startGame()" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 1rem;">¡Comenzar Actividad! 🚀</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-titles">
+                <h1>Clasificación de los Materiales</h1>
+                <p>Diagrama de árbol técnico con validación flexible por categorías.</p>
+            </div>
+            <div class="header-controls">
+                <div id="display-student-name" class="badge-pill">👤 Estudiante</div>
+                <div id="timer-display" class="badge-pill">⏱️ 00:00</div>
+                <div id="streak-display" class="badge-pill" style="color: var(--warning);">🔥 Racha: 0</div>
+                <div class="instructor-badge">Instructor Elvin Romero</div>
+            </div>
+        </header>
+
+        <div class="synopsis-viewport">
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--primary); font-weight: 800; margin-bottom: 2rem;">
+                📌 DIAGRAMA TÉCNICO DE ÁRBOL
+            </div>
+            <div id="tree-viewport-container"></div>
+        </div>
+
+        <div id="feedback-container"></div>
+
+        <section class="wordbank-section">
+            <div class="wordbank-header">
+                <span class="wordbank-title">Banco de Conceptos Disponibles</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);" id="counter-info">0 / 37 completados</span>
+            </div>
+            <div class="words-container" id="words-container"></div>
+        </section>
+
+        <footer class="action-footer">
+            <span id="status-text" style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Estado: Completa el esquema técnico.</span>
+            <div style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-secondary" onclick="resetActivity()">🔄 Reiniciar</button>
+                <button class="btn btn-primary" onclick="verifyActivity()">✨ Comprobar Esquema</button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const treeStructure = [
+            {
+                main: "Materiales Férreos",
+                subdivisions: [
+                    { category: "Hierro", items: [] },
+                    {
+                        category: "Aceros",
+                        groups: [
+                            {
+                                groupName: "Construcción",
+                                flexibleGroup: "construccion",
+                                items: [
+                                    "Corriente de construcción",
+                                    "Para tornos automáticos",
+                                    "De cementación",
+                                    "Mejorados",
+                                    "Nitrurados",
+                                    "De resortes",
+                                    "Especiales"
+                                ]
+                            },
+                            {
+                                groupName: "Herramientas",
+                                flexibleGroup: "herramientas",
+                                items: [
+                                    "Sin alear o aceros al carbono",
+                                    "De baja aleación",
+                                    "De alta aleación o aceros rápidos"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        category: "Fundición",
+                        flexibleGroup: "fundicion",
+                        items: [
+                            "Gris",
+                            "Maleable blanca",
+                            "Maleable negra",
+                            "Dura",
+                            "De acero o acero moldeado",
+                            "Especial"
+                        ]
+                    }
+                ]
+            },
+            {
+                main: "Metales no Férreos",
+                subdivisions: [
+                    {
+                        category: "Ligeros",
+                        flexibleGroup: "ligeros",
+                        items: ["Aluminio", "Titanio", "Magnesio"]
+                    },
+                    {
+                        category: "Pesados",
+                        flexibleGroup: "pesados",
+                        items: [
+                            "Cobre, zinc, estaño, plomo, níquel, cromo",
+                            "Tungsteno, Antimonio, Cadmio, Bismuto, Mercurio",
+                            "Oro, Plata, Platino",
+                            "Todas sus aleaciones"
+                        ]
+                    }
+                ]
+            },
+            {
+                main: "Materiales Sintéticos",
+                subdivisions: [
+                    { category: "Caucho", items: [] },
+                    { category: "PVC", items: [] },
+                    { category: "Siliconas", items: [] },
+                    { category: "Plásticos en general", items: [] },
+                    { category: "etc.", items: [] }
+                ]
+            }
+        ];
+
+        let userAssignments = {};
+        let expectedAnswers = [];
+        let activeDragValue = null;
+        let secondsElapsed = 0;
+        let timerInterval = null;
+        let timerStarted = false;
+        let currentStreak = 0;
+        let selectedBox = null;
+        let studentName = "";
+        let isLocked = false;
+
+        function goToInstructions() {
+            const inputName = document.getElementById('modal-student-name').value.trim();
+            if (!inputName) {
+                alert("Por favor, ingresa tu nombre para continuar.");
+                return;
+            }
+            studentName = inputName;
+            document.getElementById('display-student-name').textContent = `👤 ${studentName}`;
+            document.getElementById('modal-step-1').style.display = 'none';
+            document.getElementById('modal-step-2').style.display = 'block';
+        }
+
+        function startGame() {
+            document.getElementById('game-modal').style.display = 'none';
+            buildTree();
+        }
+
+        function playSound(type) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                if (type === 'success') {
+                    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.08);
+                    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'error') {
+                    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                }
+            } catch (e) {}
+        }
+
+        function startTimer() {
+            if (!timerStarted && !isLocked) {
+                timerStarted = true;
+                timerInterval = setInterval(() => {
+                    secondsElapsed++;
+                    let mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+                    let secs = (secondsElapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('timer-display').textContent = `⏱️ ${mins}:${secs}`;
+                }, 1000);
+            }
+        }
+
+        function buildTree() {
+            expectedAnswers = [];
+            const viewport = document.getElementById('tree-viewport-container');
+            viewport.innerHTML = '';
+            const wordsSet = new Set();
+
+            const rootContainer = document.createElement('div');
+            rootContainer.className = 'tree-root-container';
+
+            const rootBox = document.createElement('div');
+            rootBox.className = 'root-box';
+            rootBox.textContent = "MATERIALES";
+            rootContainer.appendChild(rootBox);
+
+            const branchesGroup = document.createElement('div');
+            branchesGroup.className = 'branches-group';
+
+            treeStructure.forEach((mainNode, mIdx) => {
+                const branchEval = document.createElement('div');
+                branchEval.className = 'branch-node';
+
+                const boxMain = document.createElement('div');
+                boxMain.className = 'drop-box';
+                boxMain.id = `box-main-${mIdx}`;
+                boxMain.dataset.answer = mainNode.main;
+                boxMain.innerHTML = `[ ${mainNode.main} ]`;
+                branchEval.appendChild(boxMain);
+                expectedAnswers.push(mainNode.main);
+                wordsSet.add(mainNode.main);
+
+                if (mainNode.subdivisions && mainNode.subdivisions.length > 0) {
+                    if (mainNode.main === "Materiales Sintéticos") {
+                        const subCol = document.createElement('div');
+                        subCol.className = 'items-column';
+                        subCol.style.marginLeft = "2rem";
+
+                        const syntheticPool = mainNode.subdivisions.map(sub => sub.category);
+
+                        mainNode.subdivisions.forEach((sub, sIdx) => {
+                            const row = document.createElement('div');
+                            row.className = 'item-row';
+
+                            const itemBox = document.createElement('div');
+                            itemBox.className = 'drop-box';
+                            itemBox.id = `box-synth-${sIdx}`;
+                            itemBox.dataset.validGroup = "sinteticos";
+                            itemBox.innerHTML = `[ Casilla Sintética ]`;
+                            row.appendChild(itemBox);
+                            subCol.appendChild(row);
+
+                            syntheticPool.forEach(val => wordsSet.add(val));
+                        });
+                        syntheticPool.forEach(val => expectedAnswers.push(val));
+                        branchEval.appendChild(subCol);
+                    } else {
+                        const subCol = document.createElement('div');
+                        subCol.className = 'sub-branches-column';
+                        subCol.style.marginLeft = "2rem";
+
+                        mainNode.subdivisions.forEach((subNode, sIdx) => {
+                            const subNodeRow = document.createElement('div');
+                            subNodeRow.className = 'sub-branch-node';
+
+                            const boxSub = document.createElement('div');
+                            boxSub.className = 'drop-box';
+                            boxSub.id = `box-sub-${mIdx}-${sIdx}`;
+                            boxSub.dataset.answer = subNode.category;
+                            boxSub.innerHTML = `[ ${subNode.category} ]`;
+                            subNodeRow.appendChild(boxSub);
+                            expectedAnswers.push(subNode.category);
+                            wordsSet.add(subNode.category);
+
+                            if (subNode.flexibleGroup && subNode.items && subNode.items.length > 0) {
+                                const itemCol = document.createElement('div');
+                                itemCol.className = 'items-column';
+                                itemCol.style.marginLeft = "2rem";
+
+                                const groupPool = [...subNode.items];
+                                subNode.items.forEach((item, iIdx) => {
+                                    const iRow = document.createElement('div');
+                                    iRow.className = 'item-row';
+
+                                    const itemBox = document.createElement('div');
+                                    itemBox.className = 'drop-box';
+                                    itemBox.id = `box-subitem-flex-${mIdx}-${sIdx}-${iIdx}`;
+                                    itemBox.dataset.validGroup = subNode.flexibleGroup;
+                                    itemBox.innerHTML = `[ Casilla ]`;
+                                    iRow.appendChild(itemBox);
+                                    itemCol.appendChild(iRow);
+
+                                    groupPool.forEach(val => wordsSet.add(val));
+                                });
+                                groupPool.forEach(val => expectedAnswers.push(val));
+                                subNodeRow.appendChild(itemCol);
+                            } else if (subNode.groups && subNode.groups.length > 0) {
+                                const groupCol = document.createElement('div');
+                                groupCol.className = 'sub-branches-column';
+                                groupCol.style.marginLeft = "2rem";
+
+                                subNode.groups.forEach((group, gIdx) => {
+                                    const gRow = document.createElement('div');
+                                    gRow.className = 'sub-branch-node';
+
+                                    const boxGroup = document.createElement('div');
+                                    boxGroup.className = 'drop-box';
+                                    boxGroup.id = `box-group-${mIdx}-${sIdx}-${gIdx}`;
+                                    boxGroup.dataset.answer = group.groupName;
+                                    boxGroup.innerHTML = `[ ${group.groupName} ]`;
+                                    gRow.appendChild(boxGroup);
+                                    expectedAnswers.push(group.groupName);
+                                    wordsSet.add(group.groupName);
+
+                                    if (group.flexibleGroup && group.items && group.items.length > 0) {
+                                        const itemCol = document.createElement('div');
+                                        itemCol.className = 'items-column';
+                                        itemCol.style.marginLeft = "2rem";
+
+                                        const groupPool = [...group.items];
+                                        group.items.forEach((item, iIdx) => {
+                                            const iRow = document.createElement('div');
+                                            iRow.className = 'item-row';
+
+                                            const itemBox = document.createElement('div');
+                                            itemBox.className = 'drop-box';
+                                            itemBox.id = `box-item-flex-${mIdx}-${sIdx}-${gIdx}-${iIdx}`;
+                                            itemBox.dataset.validGroup = group.flexibleGroup;
+                                            itemBox.innerHTML = `[ Casilla ]`;
+                                            iRow.appendChild(itemBox);
+                                            itemCol.appendChild(iRow);
+
+                                            groupPool.forEach(val => wordsSet.add(val));
+                                        });
+                                        groupPool.forEach(val => expectedAnswers.push(val));
+                                        gRow.appendChild(itemCol);
+                                    } else if (group.items && group.items.length > 0) {
+                                        const itemCol = document.createElement('div');
+                                        itemCol.className = 'items-column';
+                                        itemCol.style.marginLeft = "2rem";
+
+                                        group.items.forEach((item, iIdx) => {
+                                            const iRow = document.createElement('div');
+                                            iRow.className = 'item-row';
+
+                                            const itemBox = document.createElement('div');
+                                            itemBox.className = 'drop-box';
+                                            itemBox.id = `box-item-${mIdx}-${sIdx}-${gIdx}-${iIdx}`;
+                                            itemBox.dataset.answer = item;
+                                            itemBox.innerHTML = `[ Casilla ]`;
+                                            iRow.appendChild(itemBox);
+                                            itemCol.appendChild(iRow);
+
+                                            expectedAnswers.push(item);
+                                            wordsSet.add(item);
+                                        });
+                                        gRow.appendChild(itemCol);
+                                    }
+
+                                    groupCol.appendChild(gRow);
+                                });
+                                subNodeRow.appendChild(groupCol);
+                            } else if (subNode.items && subNode.items.length > 0) {
+                                const itemCol = document.createElement('div');
+                                itemCol.className = 'items-column';
+                                itemCol.style.marginLeft = "2rem";
+
+                                subNode.items.forEach((item, iIdx) => {
+                                    const iRow = document.createElement('div');
+                                    iRow.className = 'item-row';
+
+                                    const itemBox = document.createElement('div');
+                                    itemBox.className = 'drop-box';
+                                    itemBox.id = `box-subitem-${mIdx}-${sIdx}-${iIdx}`;
+                                    itemBox.dataset.answer = item;
+                                    itemBox.innerHTML = `[ Casilla ]`;
+                                    iRow.appendChild(itemBox);
+                                    itemCol.appendChild(iRow);
+
+                                    expectedAnswers.push(item);
+                                    wordsSet.add(item);
+                                });
+                                subNodeRow.appendChild(itemCol);
+                            }
+
+                            subCol.appendChild(subNodeRow);
+                        });
+                        branchEval.appendChild(subCol);
+                    }
+                }
+
+                branchesGroup.appendChild(branchEval);
+            });
+
+            rootContainer.appendChild(branchesGroup);
+            viewport.appendChild(rootContainer);
+
+            renderWordBank(Array.from(wordsSet));
+            userAssignments = {};
+            updateCounter();
+        }
+
+        function renderWordBank(words) {
+            const container = document.getElementById('words-container');
+            container.innerHTML = '';
+            const shuffled = words.sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(word => {
+                const chip = document.createElement('div');
+                chip.className = 'word-chip';
+                chip.draggable = true;
+                chip.textContent = word;
+                
+                chip.addEventListener('dragstart', (e) => {
+                    if (isLocked) return;
+                    startTimer();
+                    activeDragValue = word;
+                    e.dataTransfer.setData('text/plain', word);
+                });
+
+                chip.addEventListener('click', () => {
+                    if (isLocked) return;
+                    startTimer();
+                    placeInAvailableBox(word);
+                });
+
+                container.appendChild(chip);
+            });
+        }
+
+        document.addEventListener('dragover', (e) => { 
+            if (!isLocked && e.target.classList.contains('drop-box')) e.preventDefault(); 
+        });
+
+        document.addEventListener('drop', (e) => {
+            if (isLocked) return;
+            if (e.target.classList.contains('drop-box')) {
+                e.preventDefault();
+                startTimer();
+                if (activeDragValue) assignWordToBox(e.target, activeDragValue);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('drop-box')) {
+                if (isLocked) return;
+                startTimer();
+                if (e.target.dataset.filledWord) {
+                    const word = e.target.dataset.filledWord;
+                    returnToBank(word);
+                    e.target.textContent = e.target.dataset.validGroup ? "[ Casilla ]" : (e.target.id.includes('box-main-') || e.target.id.includes('box-sub-') || e.target.id.includes('box-group-') ? `[ ${e.target.dataset.answer} ]` : "[ Casilla ]");
+                    e.target.classList.remove('filled', 'correct', 'incorrect');
+                    e.target.style.boxShadow = 'none';
+                    delete e.target.dataset.filledWord;
+                    delete userAssignments[e.target.id];
+                    updateCounter();
+                    currentStreak = 0;
+                    updateStreakUI();
+                    document.getElementById('status-text').textContent = "Estado: Concepto devuelto al banco.";
+                    return;
+                }
+
+                document.querySelectorAll('.drop-box').forEach(b => b.style.boxShadow = 'none');
+                e.target.style.boxShadow = '0 0 0 2px var(--primary)';
+                selectedBox = e.target;
+            }
+        });
+
+        function placeInAvailableBox(word) {
+            if (isLocked) return;
+            let target = selectedBox;
+            if (!target || target.dataset.filledWord) {
+                const boxes = document.querySelectorAll('.drop-box');
+                for (let box of boxes) {
+                    if (!box.dataset.filledWord) {
+                        target = box;
+                        break;
+                    }
+                }
+            }
+            if (target) assignWordToBox(target, word);
+        }
+
+        function assignWordToBox(box, word) {
+            if (isLocked) return;
+            if (box.dataset.filledWord) returnToBank(box.dataset.filledWord);
+            box.textContent = word;
+            box.classList.add('filled');
+            box.dataset.filledWord = word;
+            userAssignments[box.id] = word;
+
+            const groupType = box.dataset.validGroup;
+            let isCorrectItem = false;
+
+            if (groupType) {
+                const groupPools = {
+                    "sinteticos": ["caucho", "pvc", "siliconas", "plásticos en general", "etc."],
+                    "construccion": ["corriente de construcción", "para tornos automáticos", "de cementación", "mejorados", "nitrurados", "de resortes", "especiales"],
+                    "herramientas": ["sin alear o aceros al carbono", "de baja aleación", "de alta aleación o aceros rápidos"],
+                    "fundicion": ["gris", "maleable blanca", "maleable negra", "dura", "de acero o acero moldeado", "especial"],
+                    "ligeros": ["aluminio", "titanio", "magnesio"],
+                    "pesados": ["cobre, zinc, estaño, plomo, níquel, cromo", "tungsteno, antimonio, cadmio, bismuto, mercurio", "oro, plata, platino", "todas sus aleaciones"]
+                };
+                if (groupPools[groupType] && groupPools[groupType].includes(word.trim().toLowerCase())) {
+                    isCorrectItem = true;
+                }
+            } else {
+                if (word.trim().toLowerCase() === (box.dataset.answer || "").trim().toLowerCase()) {
+                    isCorrectItem = true;
+                }
+            }
+
+            if (isCorrectItem) {
+                currentStreak++;
+                playSound('success');
+            } else {
+                currentStreak = 0;
+                playSound('error');
+            }
+            updateStreakUI();
+            markChipUsed(word);
+            updateCounter();
+        }
+
+        function updateStreakUI() {
+            document.getElementById('streak-display').textContent = `🔥 Racha: ${currentStreak}`;
+        }
+
+        function markChipUsed(word) {
+            document.querySelectorAll('.word-chip').forEach(chip => {
+                if (chip.textContent === word && !chip.classList.contains('used')) chip.classList.add('used');
+            });
+        }
+
+        function returnToBank(word) {
+            document.querySelectorAll('.word-chip').forEach(chip => {
+                if (chip.textContent === word && chip.classList.contains('used')) chip.classList.remove('used');
+            });
+        }
+
+        function updateCounter() {
+            const placed = Object.keys(userAssignments).length;
+            const total = expectedAnswers.length;
+            document.getElementById('counter-info').textContent = `${placed} / ${total} completados`;
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.style.display = 'block';
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particles = [];
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.7) * 14,
+                    color: ['#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#f8fafc'][Math.floor(Math.random() * 5)],
+                    size: Math.random() * 8 + 4,
+                    life: 100
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, index) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3;
+                    p.life--;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                    if (p.life <= 0) particles.splice(index, 1);
+                });
+                if (particles.length > 0) requestAnimationFrame(animate);
+                else canvas.style.display = 'none';
+            }
+            animate();
+        }
+
+        function verifyActivity() {
+            let correctCount = 0;
+            const boxes = document.querySelectorAll('.drop-box');
+
+            const groupPools = {
+                "sinteticos": ["caucho", "pvc", "siliconas", "plásticos en general", "etc."],
+                "construccion": ["corriente de construcción", "para tornos automáticos", "de cementación", "mejorados", "nitrurados", "de resortes", "especiales"],
+                "herramientas": ["sin alear o aceros al carbono", "de baja aleación", "de alta aleación o aceros rápidos"],
+                "fundicion": ["gris", "maleable blanca", "maleable negra", "dura", "de acero o acero moldeado", "especial"],
+                "ligeros": ["aluminio", "titanio", "magnesio"],
+                "pesados": ["cobre, zinc, estaño, plomo, níquel, cromo", "tungsteno, antimonio, cadmio, bismuto, mercurio", "oro, plata, platino", "todas sus aleaciones"]
+            };
+
+            let groupValidStatus = {};
+            for (let gKey in groupPools) {
+                const groupBoxes = Array.from(boxes).filter(b => b.dataset.validGroup === gKey);
+                const validList = groupPools[gKey];
+                const placedWords = groupBoxes.map(b => (b.dataset.filledWord || "").trim().toLowerCase());
+                
+                let uniqueSet = new Set(placedWords);
+                let isValid = true;
+                if (uniqueSet.size !== validList.length) {
+                    isValid = false;
+                } else {
+                    for (let w of placedWords) {
+                        if (!validList.includes(w)) {
+                            isValid = false;
+                            break;
+                        }
+                    }
+                }
+                groupValidStatus[gKey] = isValid;
+            }
+
+            boxes.forEach(box => {
+                box.classList.remove('correct', 'incorrect');
+                const actual = box.dataset.filledWord;
+                const gType = box.dataset.validGroup;
+
+                if (gType) {
+                    if (groupValidStatus[gType]) {
+                        box.classList.add('correct');
+                        correctCount++;
+                    } else {
+                        box.classList.add('incorrect');
+                    }
+                } else {
+                    const expected = box.dataset.answer;
+                    if (actual && actual.trim().toLowerCase() === expected.trim().toLowerCase()) {
+                        box.classList.add('correct');
+                        correctCount++;
+                    } else {
+                        box.classList.add('incorrect');
+                    }
+                }
+            });
+
+            const status = document.getElementById('status-text');
+            const feedbackBox = document.getElementById('feedback-container');
+            feedbackBox.innerHTML = '';
+
+            if (correctCount === expectedAnswers.length) {
+                isLocked = true;
+                if (timerInterval) clearInterval(timerInterval);
+                playSound('success');
+                launchConfetti();
+
+                status.innerHTML = `🏆 ¡Esquema completado y bloqueado con éxito para ${studentName}!`;
+
+                let timeCardHTML = "";
+                if (secondsElapsed <= 300) {
+                    timeCardHTML = `
+                        <div class="feedback-card" style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #f8fafc;">
+                            <h3 style="color: #22c55e; margin-bottom: 0.4rem;">🟢 De 0 a 5 minutos — ¡Dominio excepcional! 🏆</h3>
+                            <p><strong>¡Impresionante, ${studentName}! 🎉</strong></p>
+                            <p>Has completado la actividad en un tiempo excelente, demostrando rapidez, concentración y dominio de los contenidos.</p>
+                            <p>⚡ Tu desempeño demuestra que puedes aplicar tus conocimientos con seguridad y agilidad.</p>
+                            <p>¡Excelente trabajo! Has alcanzado un nivel sobresaliente. 🚀🏆</p>
+                        </div>`;
+                } else if (secondsElapsed <= 600) {
+                    timeCardHTML = `
+                        <div class="feedback-card" style="background: rgba(56, 189, 248, 0.15); border: 1px solid var(--primary); color: #f8fafc;">
+                            <h3 style="color: var(--primary); margin-bottom: 0.4rem;">🔵 De 5:01 a 10 minutos — ¡Excelente desempeño! 🌟</h3>
+                            <p><strong>¡Muy buen trabajo, ${studentName}! 👏</strong></p>
+                            <p>Has completado la actividad en un tiempo muy favorable, demostrando un buen manejo de los contenidos.</p>
+                            <p>💡 Sigue practicando para ganar todavía más seguridad y fluidez al resolver las actividades.</p>
+                            <p>¡Estás avanzando muy bien! Sigue superándote. 💪🚀</p>
+                        </div>`;
+                } else if (secondsElapsed <= 900) {
+                    timeCardHTML = `
+                        <div class="feedback-card" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: #f8fafc;">
+                            <h3 style="color: var(--warning); margin-bottom: 0.4rem;">🟠 De 10:01 a 15 minutos — ¡Buen progreso! 🎯</h3>
+                            <p><strong>¡Buen trabajo, ${studentName}! 👏</strong></p>
+                            <p>Has completado la actividad y demostrado que estás construyendo tus conocimientos paso a paso.</p>
+                            <p>📚 Tómate el tiempo necesario para revisar aquellos contenidos que presentaron mayor dificultad. Con práctica podrás resolver la actividad con mayor seguridad y rapidez.</p>
+                            <p>¡Cada intento te ayuda a mejorar! Sigue adelante. 🚀</p>
+                        </div>`;
+                } else {
+                    timeCardHTML = `
+                        <div class="feedback-card" style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: #f8fafc;">
+                            <h3 style="color: var(--danger); margin-bottom: 0.4rem;">🔴 Más de 15 minutos — ¡Cada intento cuenta! 💪</h3>
+                            <p><strong>¡No te desanimes, ${studentName}! 🌟</strong></p>
+                            <p>Lo importante es que completaste la actividad y tuviste la oportunidad de poner en práctica tus conocimientos.</p>
+                            <p>📖 Algunos contenidos pueden requerir un poco más de tiempo para comprenderlos y aplicarlos. Revisa nuevamente el material, identifica los aspectos que te resultaron más difíciles y vuelve a intentarlo.</p>
+                            <p>Recuerda: aprender no es una carrera contra el reloj. Cada intento es una oportunidad para mejorar. 🎯</p>
+                            <p>¡Sigue practicando! Tu próximo intento puede ser aún mejor. 🚀</p>
+                        </div>`;
+                }
+
+                feedbackBox.innerHTML = timeCardHTML;
+            } else {
+                playSound('error');
+                status.innerHTML = `⚠️ <span style="color: var(--danger);">Tienes ${correctCount} de ${expectedAnswers.length} aciertos. Revisa las casillas en rojo y ajusta tu esquema.</span>`;
+            }
+        }
+
+        function resetActivity() {
+            userAssignments = {};
+            secondsElapsed = 0;
+            timerStarted = false;
+            currentStreak = 0;
+            isLocked = false;
+            updateStreakUI();
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('timer-display').textContent = "⏱️ 00:00";
+            document.getElementById('feedback-container').innerHTML = '';
+            document.getElementById('status-text').textContent = "Estado: Actividad reiniciada.";
+
+            document.querySelectorAll('.drop-box').forEach(box => {
+                box.textContent = box.dataset.validGroup ? "[ Casilla ]" : (box.id.includes('box-main-') || box.id.includes('box-sub-') || box.id.includes('box-group-') ? `[ ${box.dataset.answer} ]` : "[ Casilla ]");
+                box.classList.remove('filled', 'correct', 'incorrect');
+                box.style.boxShadow = 'none';
+                delete box.dataset.filledWord;
+            });
+            document.querySelectorAll('.word-chip').forEach(chip => chip.classList.remove('used'));
+            updateCounter();
+        }
+    </script>
+</body>
+</html>
